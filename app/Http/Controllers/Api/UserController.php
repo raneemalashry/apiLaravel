@@ -48,9 +48,9 @@ class UserController extends Controller
     }
     public function update(Request $request){
         $rules = [
-            'name'=>'required|string',
-            'email'=>'email|unique:users,email',
-            'password'=>'min:6' ];
+            'name'=>'sometimes|required|string',
+            'email'=>'sometimes|required|email|unique:users,email',
+            'password'=>'sometimes|required|min:6' ];
 
 
         $data = validator()->make($request->all(), $rules);
@@ -63,7 +63,7 @@ class UserController extends Controller
         $record = User::findorfail($request->id);
         $update= $record-> update($request->all());
 
-      return $this->jsonResponse('sucess','done',$update) ;
+      return $this->jsonResponse('sucess','done',$record) ;
   
       }
      
