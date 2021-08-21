@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Category;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ResponseTrait;
 use App\User;
 use GuzzleHttp\Promise\Create;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -19,10 +20,11 @@ class UserController extends Controller
         $query->where('id',  $request->id);
 
     })->get();
+    $index->load('categories');
     return $this->jsonResponse('sucess','done',$index) ;
 
     }
-    public function create(Request $request){
+    public function register(Request $request){
         $rules = [
             'name'=>'required|string',
             'email'=>'email|unique:users,email',
@@ -37,20 +39,25 @@ class UserController extends Controller
         if ($data->fails()) {
             return $this->jsonResponse('fail','error',$data->errors());
         } else {
+            
+     $request->merge(['password'=> bcrypt($request->password)]);
+    $user= User:: create($request->all());
+  
+    $categories = Category::find([$request->categories]);
+    $user->categories()->attach($categories);
 
-        $request->merge(['password'=> bcrypt($request->password)]);
-        $create= User:: create($request->all());
-
-      return $this->jsonResponse('sucess','done',$create) ;
+         return $this->jsonResponse('sucess','user registered', $user) ;
   
       }
      
     }
-    public function update(Request $request){
+    public function login(Request $request){
         $rules = [
-            'name'=>'sometimes|required|string',
-            'email'=>'sometimes|required|email|unique:users,email',
-            'password'=>'sometimes|required|min:6' ];
+            'email'=>'email',
+            'password'=>'min:6'
+
+
+        ];
 
 
         $data = validator()->make($request->all(), $rules);
@@ -58,9 +65,43 @@ class UserController extends Controller
         if ($data->fails()) {
             return $this->jsonResponse('fail','error',$data->errors());
         } else {
+            if (Auth::attempt(array('email' => $request->email, 'password' => $request->password))){
+                $user = $request->user();
+                $sucess['token']=$user->createToken('myApp')->accessToken;
+                $sucess['name']=$user->name;
+                $msg= "you logged in";
+            }else{
+                $msg= "email or password is wrong";
+                $sucess=null;
+            }
+     
+        
+         return $this->jsonResponse('sucess',$msg, $sucess) ;
+  
+      }
+     
+    }
+    public function update(Request $request){
+        $rules = [
+            'name'=>'sometimes|string',
+            'email'=>'sometimes|email|unique:users,email',
+            'password'=>'sometimes|nullable|min:6' ,
+        'category'=>'sometimes|integer' 
+    ];
 
-        $request->merge(['password'=> bcrypt($request->password)]);
+
+        $data = validator()->make($request->all(), $rules);
+
+        if ($data->fails()) {
+            return $this->jsonResponse('fail','error',$data->errors());
+        } else {
+            if($request->password){
+                $request->merge(['password'=> bcrypt($request->password)]);
+            }
+       
         $record = User::findorfail($request->id);
+        $record->categories()->sync($request->category);
+
         $update= $record-> update($request->all());
 
       return $this->jsonResponse('sucess','done',$record) ;
@@ -74,7 +115,9 @@ class UserController extends Controller
     {
         
         $record = User::findorfail($request->id);
+        $record->categories()->detach();
         $record->delete();
+
         return $this->jsonResponse('sucess','deleted') ;
     }
 
