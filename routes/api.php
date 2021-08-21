@@ -20,12 +20,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('register','Api\UserController@register');
 Route::post('login','Api\UserController@login');
 
-// Route::group(['middleware'=>'auth:api'], function(){
+ Route::group(['middleware'=>'auth:api'], function(){
     Route::get('users/index','Api\UserController@index');
     Route::post('users/update','Api\UserController@update');
     Route::post('users/delete','Api\UserController@destroy');
    
-// });
+});
 
 
 
