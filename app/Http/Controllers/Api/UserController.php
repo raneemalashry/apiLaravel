@@ -41,10 +41,12 @@ class UserController extends Controller
         } else {
             
      $request->merge(['password'=> bcrypt($request->password)]);
+
     $user= User:: create($request->all());
-  
-    $categories = Category::find([$request->categories]);
-    $user->categories()->attach($categories);
+            foreach($request->categories as $category){
+                $category = Category::find([$category]);
+                $user->categories()->attach($category);
+            }
 
          return $this->jsonResponse('sucess','user registered', $user) ;
   
