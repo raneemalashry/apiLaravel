@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+Route::group(['namespace'=>'Api'], function(){
+
+    Route::get('/register', 'UserController@create');
+    Route::post('register', 'UserController@store');
+});
+
+Route::get('/login','LoginController@showLogin')->name('login');
+Route::post('/login','LoginController@login');
+Route::group(['middleware'=>'auth'],function(){
+    Route::get('/home','LoginController@home');
+    Route::post('logout', 'LoginController@logout')->name('logout');
 });
