@@ -29,3 +29,8 @@ Route::group(['middleware'=>'auth'],function(){
     Route::get('/home','LoginController@home');
     Route::post('logout', 'LoginController@logout')->name('logout');
 });
+
+Route::get('dashboard',function(){
+return view('dashboard.index');
+});
+
